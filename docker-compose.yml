@@ -1,0 +1,30 @@
+version: '3'
+services:
+  cbers_cc:
+    image: cbers_cc_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./cbers_cc:/cbers_cc
+    ports:
+      - '80:5000'
+  # redis:
+  #   image: redis:alpine
+  # celery:
+  #   restart: always
+  #   build:
+  #     context: .
+  #   command: celery -A cbers_cc worker -l info
+  #   volumes:
+  #     - ./cbers_cc:/cbers_cc
+  #   environment:
+  #     - DB_NAME=$DJANGO_DB_NAME
+  #     - DB_USER=$DJANGO_DB_USER
+  #     - DB_HOST=$DJANGO_DB_HOST
+  #     - DB_PASS=$DJANGO_DB_PASSWORD
+  #   depends_on:
+  #     - cbers_cc
+  #     - redis
