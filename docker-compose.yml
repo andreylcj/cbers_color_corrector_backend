@@ -1,30 +1,36 @@
 version: '3'
 services:
-  cbers_cc:
-    image: cbers_cc_backend
+
+  django_backend:
+    image: cbers_cc_backend_django
+    container_name: cbers_cc_backend_django
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./infra/compose/django/Dockerfile
+    command: /home/cbers_cc/start
     env_file:
       - .env
     volumes:
-      - ./cbers_cc:/cbers_cc
+      - ./src/cbers_cc:/home/cbers_cc/src/cbers_cc
     ports:
       - '80:5000'
-  # redis:
-  #   image: redis:alpine
-  # celery:
-  #   restart: always
-  #   build:
-  #     context: .
-  #   command: celery -A cbers_cc worker -l info
-  #   volumes:
-  #     - ./cbers_cc:/cbers_cc
-  #   environment:
-  #     - DB_NAME=$DJANGO_DB_NAME
-  #     - DB_USER=$DJANGO_DB_USER
-  #     - DB_HOST=$DJANGO_DB_HOST
-  #     - DB_PASS=$DJANGO_DB_PASSWORD
-  #   depends_on:
-  #     - cbers_cc
-  #     - redis
+
+  redis:
+    image: redis:alpine
+    container_name: cbers_cc_backend_redis
+
+  celery:
+    image: cbers_cc_backend_celery
+    container_name: cbers_cc_backend_celery
+    restart: always
+    build:
+      context: .
+      dockerfile: ./infra/compose/django/Dockerfile
+    command: /home/cbers_cc/start-celeryworker
+    volumes:
+      - ./src/cbers_cc:/home/cbers_cc/src/cbers_cc
+    env_file:
+      - .env
+    depends_on:
+      - django_backend
+      - redis

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+
+# go to project path
+cd /home/cbers_cc/src/cbers_cc/
+
+
+celery -A cbers_cc worker -f logs/celery.log -l info
