@@ -7,5 +7,5 @@ from .views import (
 
 
 router = DefaultRouter()
-router.register(r'tiles-512/', Tile512ViewSet, basename='Tile512ViewSet')
+router.register(r'tiles-512', Tile512ViewSet, basename='Tile512ViewSet')
 urlpatterns = router.urls
