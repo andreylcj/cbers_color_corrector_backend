@@ -10,8 +10,8 @@ environ.Env.read_env()
 
 def create_superuser(apps, schema_editor):
     user = User.objects.create_user(
-        username=os.getenv('SUPERUSER_USERNAME', default=env('SUPERUSER_USERNAME')),
-        password=os.getenv('SUPERUSER_PASSWORD', default=env('SUPERUSER_PASSWORD')),
+        username=os.getenv('DJANGO_SUPERUSER_USERNAME', default=env('DJANGO_SUPERUSER_USERNAME')),
+        password=os.getenv('DJANGO_SUPERUSER_PASSWORD', default=env('DJANGO_SUPERUSER_PASSWORD')),
         is_staff=True,
         is_superuser=True,
     )
