@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+
+# go to project path
+cd /home/cbers_cc/src/cbers_cc/
+
+
+echo "!********************************************************!"
+echo "!*** [START] Executing migrate ***!"
+echo "!********************************************************!"
+python manage.py migrate
+echo "!********************************************************!"
+echo "!*** [END  ] Executing migrate ***!"
+echo "!********************************************************!"
+
+
+echo "!********************************************************!"
+echo "!*** [START] Running server ***!"
+echo "!********************************************************!"
+python manage.py runserver 0.0.0.0:8000
