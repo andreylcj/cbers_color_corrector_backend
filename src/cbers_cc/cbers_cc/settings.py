@@ -11,16 +11,14 @@ environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default=env('DJANGO_SECRET_KEY'))
+SECRET_KEY = os.getenv('SECRET_KEY', default=env('SECRET_KEY'))
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.getenv('ENV', default=env('ENV')) != 'PROD' else False
-
+ENV = os.getenv('ENV', default=env('ENV'))
+DEBUG = True if 'DEV' not in ENV and 'PROD' not in ENV else False
+# DEBUG = False
 
 
 ALLOWED_HOSTS = ['*']
@@ -45,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     "rest_framework_api_key",
-    # "django_filters",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -88,11 +86,11 @@ DATABASES = {
         'OPTIONS': {
             'options': '-c search_path=django,public'
         },
-        'NAME': os.getenv('DJANGO_DB_NAME', default=env('DJANGO_DB_NAME')),
-        'USER': os.getenv('DJANGO_DB_USER', default=env('DJANGO_DB_USER')),
-        'PASSWORD': os.getenv('DJANGO_DB_PASSWORD', default=env('DJANGO_DB_PASSWORD')),
-        'HOST': os.getenv('DJANGO_DB_HOST', default=env('DJANGO_DB_HOST')),
-        'PORT': os.getenv('DJANGO_DB_PORT', default=env('DJANGO_DB_PORT')),
+        'NAME': os.getenv('DB_NAME', default=env('DB_NAME')),
+        'USER': os.getenv('DB_USER', default=env('DB_USER')),
+        'PASSWORD': os.getenv('DB_PASSWORD', default=env('DB_PASSWORD')),
+        'HOST': os.getenv('DB_HOST', default=env('DB_HOST')),
+        'PORT': os.getenv('DB_PORT', default=env('DB_PORT')),
         'TEST': {
             'NAME': 'cbers_cc_backend_test_database',
         },
@@ -169,22 +167,29 @@ API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 
 
 # Add to create the folders in Path
-LOG_FILE_PATH = './logs'
-LOG_FILENAME = 'debug3.log'
+# Add to create the folders in Path
+if ENV == 'LOCAL':
+    LOG_FILE_PATH = './local-logs'
+else:
+    LOG_FILE_PATH = './logs'
+    
+
 p = Path(LOG_FILE_PATH).resolve()
 p.mkdir(parents=True, exist_ok=True)
 
-LOG_LEVEL = os.getenv('DJANGO_LOG_LEVEL', default=env('DJANGO_LOG_LEVEL'))
+LOG_LEVEL = os.getenv('LOG_LEVEL', default=env('LOG_LEVEL'))
 
 LOGGING = {
     'version': 1,
     # 'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '[%(asctime)s.%(msecs)03d] p%(process)s {%(pathname)s:%(lineno)d} [%(name)-12s] [%(threadName)-14s] [%(levelname)8s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s.%(msecs)03d %(levelname)s %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'handlers': {
@@ -193,21 +198,44 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
+        'debug3': {
+            'level': 'DEBUG',
+            # 'class': 'logging.FileHandler',
+            'filename': p / 'AppDebug3.log',
+            'formatter': 'verbose',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight', # specifies the interval
+            'backupCount': 30, # how many backup file to keep, 30 days
+        },
+        'errors': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': p / 'AppErrors.log',
+            'formatter': 'verbose'
+        },
         'file': {
             'level': LOG_LEVEL,
-            'class': 'logging.FileHandler',
-            'filename': p / LOG_FILENAME,
-            'formatter': 'simple'
+            'filename': p / 'AppGeneral.log',
+            'formatter': 'verbose',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight', # specifies the interval
+            'backupCount': 14, # how many backup file to keep, 14 days
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['debug3', 'errors'],
+            'level': 'DEBUG',
+            # 'propagate': True,
+        },
         'django': {
-            'handlers': ['file'],
-            'level': LOG_LEVEL,
+            'handlers': ['file', 'console', 'debug3', 'errors'],
+            'level': 'DEBUG',
             'propagate': True,
         },
     }
 }
+
 
 if DEBUG:
     # make all loggers use the console.
@@ -216,5 +244,5 @@ if DEBUG:
 
 
 ### CELERY
-# CELERY_BROKER_URL = os.getenv('DJANGO_REDIS_CONNECTION', default=env('DJANGO_REDIS_CONNECTION'))
-# CELERY_RESULT_BACKEND = os.getenv('DJANGO_REDIS_CONNECTION', default=env('DJANGO_REDIS_CONNECTION'))
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER', default=env('CELERY_BROKER'))
+CELERY_RESULT_BACKEND = os.getenv('CELERY_BACKEND', default=env('CELERY_BACKEND'))

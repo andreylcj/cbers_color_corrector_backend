@@ -13,8 +13,7 @@ class CdfJSON(TypedDict):
     b: List[float]
 
 
-class Tile512GetSimilarRequest(TypedDict):
-    embedding: List[float]
+Tile512GetSimilarRequest = EmbeddingJSON
 
 
 class Tile512GetSimilarResponse(TypedDict):

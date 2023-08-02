@@ -14,7 +14,7 @@ from cbers_cc_plugin.resources.types import (
 )
 from rest_framework.response import Response
 from typing import List, Dict
-from django.db.models import F
+
 import numpy as np
 
 
@@ -26,25 +26,44 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
     
     @action(
         detail=False, 
-        methods=['GET'], 
+        methods=['POST'], 
         url_path=f'similar', 
         url_name='get_similar'
     )
     def get_similar(self, request, *args, **kwargs):
         request_data: Tile512GetSimilarRequest = request.data
         embedding: List[float] = request_data['embedding']
-        distance_expression = sum((F('embedding') - val) ** 2 for val in embedding)
-        similar_tile = Tile512.objects \
-            .annotate(distance=distance_expression) \
-            .order_by('distance') \
-            .first()
+        embedding_txt: str = str(embedding)
+        
+        similar_tile = self.Model.objects.raw(f"""
+            SELECT 
+                res.id, 
+                res.cdf,
+                res.similarity
+            FROM (
+                SELECT
+                    *,
+                    (
+                        SELECT SQRT(
+                            SUM( (e.value::numeric - q.value::numeric)^2 )
+                        )
+                        FROM jsonb_array_elements_text(ccc512.embedding->'embedding') WITH ORDINALITY AS e(value, i),
+                            jsonb_array_elements_text('{embedding_txt}'::jsonb) WITH ORDINALITY AS q(value, j)
+                        WHERE e.i = q.j
+                    ) as similarity
+                FROM cbers_cc_plugin.tile_512 ccc512
+            ) res
+            ORDER BY similarity ASC
+            LIMIT 1;
+        """)
         
         response_kwargs: Dict = {}
         
         if similar_tile is not None:
+            similar_tile = similar_tile[0]
             response_data = Tile512GetSimilarResponse(
                 cdf=similar_tile.cdf,
-                similarity=np.sqrt(similar_tile.distance),
+                similarity=similar_tile.similarity,
             )
             
         else:

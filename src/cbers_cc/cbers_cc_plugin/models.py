@@ -5,7 +5,7 @@ from common.abstract import SchemaModel
 
 
 class Tile512(SchemaModel):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     src_filename = models.TextField(null=True, blank=True)
