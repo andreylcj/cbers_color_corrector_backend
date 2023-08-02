@@ -12,7 +12,7 @@ class Tile512(SchemaModel):
     src_pixel_xl = models.BigIntegerField(null=True)
     src_pixel_xr = models.BigIntegerField(null=True)
     src_pixel_yu = models.BigIntegerField(null=True)
-    src_pixel_ud = models.BigIntegerField(null=True)
+    src_pixel_yd = models.BigIntegerField(null=True)
     embedding = models.JSONField(null=True) # cbers_cc_plugin.resources.types.EmbeddingJSON
     cdf = models.JSONField(null=True) # cbers_cc_plugin.resources.types.CdfJSON
     metadata = models.JSONField(null=True)
