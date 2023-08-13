@@ -23,6 +23,10 @@ DEBUG = True if 'DEV' not in ENV and 'PROD' not in ENV else False
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://django.django.pfc.msereno.com'
+]
+
 
 # Application definition
 
