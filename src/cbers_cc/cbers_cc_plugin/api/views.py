@@ -19,6 +19,9 @@ import numpy as np
 
 
 class Tile512ViewSet(FlexFieldsModelViewSet):
+    authentication_classes = [] #disables authentication
+    permission_classes = [] #disables permission
+    
     serializer_class = Tile512Serializer
     queryset = Tile512.objects.all().order_by('id')
     Model = Tile512
