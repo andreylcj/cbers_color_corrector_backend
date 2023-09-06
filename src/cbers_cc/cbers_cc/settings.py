@@ -23,6 +23,10 @@ DEBUG = True if 'DEV' not in ENV and 'PROD' not in ENV else False
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    os.getenv('DJANGO_CSRF_TRUSTED_ORIGIN', default=env('DJANGO_CSRF_TRUSTED_ORIGIN')),
+]
+
 
 # Application definition
 
