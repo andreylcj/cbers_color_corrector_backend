@@ -8,17 +8,25 @@ from cbers_cc_plugin.models import (
     Tile512,
 )
 from rest_framework.decorators import action
+from cbers_cc_plugin.apps import CACHE_MODEL_PROCESSOR_KEY
 from cbers_cc_plugin.resources.types import (
     Tile512GetSimilarRequest,
     Tile512GetSimilarResponse,
+    Embedding,
+)
+from cbers_cc_plugin.resources.utils import (
+    calculate_tile_embedding
 )
 from rest_framework.response import Response
 from typing import List, Dict
-
+from django.core.cache import cache
 import numpy as np
 
 
 class Tile512ViewSet(FlexFieldsModelViewSet):
+    authentication_classes = [] #disables authentication
+    permission_classes = [] #disables permission
+    
     serializer_class = Tile512Serializer
     queryset = Tile512.objects.all().order_by('id')
     Model = Tile512
@@ -32,9 +40,17 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
     )
     def get_similar(self, request, *args, **kwargs):
         request_data: Tile512GetSimilarRequest = request.data
-        embedding: List[float] = request_data['embedding']
+        
+        # Calculate embedding
+        model_processor = cache.get(CACHE_MODEL_PROCESSOR_KEY)
+        embedding: Embedding = calculate_tile_embedding(
+            image=np.array(request_data['tile512']),
+            model=model_processor['model'],
+            processor=model_processor['processor'],
+        )
         embedding_txt: str = str(embedding)
         
+        # Find similar
         similar_tile = self.Model.objects.raw(f"""
             SELECT 
                 res.id, 

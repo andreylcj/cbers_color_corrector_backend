@@ -12,7 +12,7 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', default=env('SECRET_KEY'))
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default=env('DJANGO_SECRET_KEY'))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -22,6 +22,10 @@ DEBUG = True if 'DEV' not in ENV and 'PROD' not in ENV else False
 
 
 ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    os.getenv('DJANGO_CSRF_TRUSTED_ORIGIN', default=env('DJANGO_CSRF_TRUSTED_ORIGIN')),
+]
 
 
 # Application definition
