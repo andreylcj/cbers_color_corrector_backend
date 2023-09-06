@@ -1,6 +1,6 @@
 
 
-from typing import TypedDict, List
+from typing import TypedDict, List, Tuple
 
 
 class EmbeddingJSON(TypedDict):
@@ -13,7 +13,12 @@ class CdfJSON(TypedDict):
     b: List[float]
 
 
-Tile512GetSimilarRequest = EmbeddingJSON
+Embedding = List[float]
+PixelRGB = Tuple[int, int, int]
+Image = List[List[PixelRGB]]
+
+class Tile512GetSimilarRequest(TypedDict):
+    tile512: Image
 
 
 class Tile512GetSimilarResponse(TypedDict):

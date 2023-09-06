@@ -97,12 +97,32 @@ class TestViews(TestSetUp):
             )
             tile512 = Tile512(**item)
             tile512.save()
+        
+        
+        path: str = 'cbers_cc_plugin/tests/payload/tile_info.json'
+        with open(path, "r") as f:
+            data = json.loads(f.read())
+        data = {
+            'src_filename': "s01_pancromatica.tif",
+            'src_pixel_xl': data['col_off'],
+            'src_pixel_xr': data['col_off'] + data['width'],
+            'src_pixel_yu': data['row_off'],
+            'src_pixel_yd': data['row_off'] + data['height'],
+            'embedding': data['embedding'],
+            'cdf': data['extra']['correspondent_pretty_tile_cdf'],            
+        }
+        tile512 = Tile512(**data)
+        tile512.save()
 
     @log_details("Tile 512 Get Similar")
     def tile512_get_similar(self):
-        request_data = Tile512GetSimilarRequest(
-            embedding=[.41 for i in range(1, 512+1)]
-        )
+        path: str = 'cbers_cc_plugin/tests/payload/tile512.json'
+        with open(path, "r") as f:
+            data = json.loads(f.read())
+        request_data: Tile512GetSimilarRequest = {
+            'tile512': data['tile512']
+        }
+        
         url = reverse('Tile512ViewSet-get_similar')
         res = test_method(
             url=url,
@@ -114,21 +134,18 @@ class TestViews(TestSetUp):
         content = res.content.decode("utf-8") 
         res = json.loads(content)
         
-        expected_similarity: float = np.sqrt(
-            np.array([0.01**2 for i in range(1, 512+1)]).sum()
-        )
-        expected_cdf: List[float] = CdfJSON(
-                r=[.4 for i in range(1, 256+1)],
-                g=[.4 for i in range(1, 256+1)],
-                b=[.4 for i in range(1, 256+1)],
-            )
+        path: str = 'cbers_cc_plugin/tests/payload/tile_info.json'
+        with open(path, "r") as f:
+            data = json.loads(f.read())
+        expected_similarity: float = 0
+        expected_cdf = data['extra']['correspondent_pretty_tile_cdf']
         
+        self.assertLessEqual(abs(expected_similarity - res['similarity']), 1e-3)
         self.assertTrue('cdf' in res)
         self.assertEqual(
             json.dumps(res['cdf'], sort_keys=True),
             json.dumps(expected_cdf, sort_keys=True),
         )
-        self.assertLessEqual(abs(expected_similarity - res['similarity']), 1e-3)
 
     @log_details("Basic", omit_start=False)
     def test_base(self):
