@@ -10,7 +10,7 @@ CACHE_MODEL_PROCESSOR_KEY: str = 'model_processor_dict'
 
 
 def cache_model(sender, **kwargs):    
-    print(f"Cache model...")    
+    print(f"Caching model...")
     model_path: str = "flax-community/clip-rsicd-v2"
     model = FlaxCLIPModel.from_pretrained(model_path)
     processor = CLIPProcessor.from_pretrained(model_path)
