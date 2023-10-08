@@ -63,7 +63,7 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
                         SELECT SQRT(
                             SUM( (e.value::numeric - q.value::numeric)^2 )
                         )
-                        FROM jsonb_array_elements_text(ccc512.embedding) WITH ORDINALITY AS e(value, i),
+                        FROM jsonb_array_elements_text(ccc512.embedding::jsonb) WITH ORDINALITY AS e(value, i),
                             jsonb_array_elements_text('{embedding_txt}'::jsonb) WITH ORDINALITY AS q(value, j)
                         WHERE e.i = q.j
                     ) as similarity
@@ -78,6 +78,7 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
         if similar_tile is not None:
             similar_tile = similar_tile[0]
             response_data = Tile512GetSimilarResponse(
+                id=similar_tile.id,
                 cdf=similar_tile.cdf,
                 similarity=similar_tile.similarity,
             )

@@ -23,6 +23,7 @@ import numpy as np
 import logging
 import environ
 from django.urls import reverse
+import math
 env = environ.Env()
 environ.Env.read_env()
 
@@ -44,9 +45,7 @@ class TestViews(TestSetUp):
                 'src_pixel_ud',
             ]
         )[0]
-        data['embedding'] = EmbeddingJSON(
-            embedding=[.5 for i in range(512)]
-        )
+        data['embedding'] = [.5 for i in range(512)]
         data['cdf'] = CdfJSON(
             r=[.5 for i in range(256)],
             g=[.5 for i in range(256)],
@@ -83,13 +82,11 @@ class TestViews(TestSetUp):
                 'src_pixel_yu',
                 'src_pixel_ud',
             ],
-            qty=3,
+            qty=2,
         )
         for idx, item in enumerate(data):
-            curr_val: float = .2 if idx == 0 else .4 if idx == 1 else .6 
-            item['embedding'] = EmbeddingJSON(
-                embedding=[curr_val for i in range(1, 512+1)]
-            )
+            curr_val: float = 0 if idx == 0 else 1
+            item['embedding'] = [curr_val for i in range(1, 512+1)]
             item['cdf'] = CdfJSON(
                 r=[curr_val for i in range(1, 256+1)],
                 g=[curr_val for i in range(1, 256+1)],
@@ -99,20 +96,20 @@ class TestViews(TestSetUp):
             tile512.save()
         
         
-        path: str = 'cbers_cc_plugin/tests/payload/tile_info.json'
-        with open(path, "r") as f:
-            data = json.loads(f.read())
-        data = {
-            'src_filename': "s01_pancromatica.tif",
-            'src_pixel_xl': data['col_off'],
-            'src_pixel_xr': data['col_off'] + data['width'],
-            'src_pixel_yu': data['row_off'],
-            'src_pixel_yd': data['row_off'] + data['height'],
-            'embedding': data['embedding'],
-            'cdf': data['extra']['correspondent_pretty_tile_cdf'],            
-        }
-        tile512 = Tile512(**data)
-        tile512.save()
+        # path: str = 'cbers_cc_plugin/tests/payload/tile_info.json'
+        # with open(path, "r") as f:
+        #     data = json.loads(f.read())
+        # data = {
+        #     'src_filename': "s01_pancromatica.tif",
+        #     'src_pixel_xl': data['col_off'],
+        #     'src_pixel_xr': data['col_off'] + data['width'],
+        #     'src_pixel_yu': data['row_off'],
+        #     'src_pixel_yd': data['row_off'] + data['height'],
+        #     'embedding': data['embedding'],
+        #     'cdf': data['extra']['correspondent_pretty_tile_cdf'],            
+        # }
+        # tile512 = Tile512(**data)
+        # tile512.save()
 
     @log_details("Tile 512 Get Similar")
     def tile512_get_similar(self):
@@ -147,9 +144,66 @@ class TestViews(TestSetUp):
             json.dumps(expected_cdf, sort_keys=True),
         )
 
+    @log_details("Tile 512 Get Similar Diff Response For Diff Request")
+    def tile512_diff_res_for_diff_req(self):
+        path: str = 'cbers_cc_plugin/tests/payload/tile512.json'
+        with open(path, "r") as f:
+            data = json.loads(f.read())
+            
+        request_data: Tile512GetSimilarRequest = {
+            'tile512': data['tile512']
+        }      
+        url = reverse('Tile512ViewSet-get_similar')
+        res1 = test_method(
+            url=url,
+            method='post',
+            api_test_case=self,
+            token=self.token,
+            data=request_data,
+        )
+        content = res1.content.decode("utf-8") 
+        res1 = json.loads(content)
+        
+        res1['cdf'] = {
+            "r": res1['cdf']['r'][:5] + res1['cdf']['r'][50:55] + res1['cdf']['r'][-5:],
+            "g": res1['cdf']['g'][:5] + res1['cdf']['g'][50:55] + res1['cdf']['g'][-5:],
+            "b": res1['cdf']['b'][:5] + res1['cdf']['b'][50:55] + res1['cdf']['b'][-5:],
+        }
+        # pprint(res1)
+        
+        tile512_data = data['tile512']
+        dummy_tile = []
+        for i in range(len(tile512_data)):
+            dummy_tile.append([])
+            for j in range(len(tile512_data[i])):
+                val = math.floor(j * 255 / len(tile512_data[i]))
+                dummy_tile[-1].append([val, val, val])
+        request_data: Tile512GetSimilarRequest = {
+            'tile512': dummy_tile
+        }
+        res2 = test_method(
+            url=url,
+            method='post',
+            api_test_case=self,
+            token=self.token,
+            data=request_data,
+        )
+        content = res2.content.decode("utf-8") 
+        res2 = json.loads(content)
+        
+        res2['cdf'] = {
+            "r": res2['cdf']['r'][:5] + res2['cdf']['r'][50:55] + res2['cdf']['r'][-5:],
+            "g": res2['cdf']['g'][:5] + res2['cdf']['g'][50:55] + res2['cdf']['g'][-5:],
+            "b": res2['cdf']['b'][:5] + res2['cdf']['b'][50:55] + res2['cdf']['b'][-5:],
+        }
+        # pprint(res2)
+        
+        self.assertEqual(res1['id'], res2['id'])
+        
     @log_details("Basic", omit_start=False)
     def test_base(self):
         self.TestCreateTile512()
         self.populate_tile_512()
-        self.tile512_get_similar()
+        # self.tile512_get_similar()
+        self.tile512_diff_res_for_diff_req()
         
