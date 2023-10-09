@@ -47,6 +47,7 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
         model_processor = cache.get(CACHE_MODEL_PROCESSOR_KEY)
         
         np_img = np.array(request_data['tile512'])
+        print(f'Numpy Image Shape: {np_img.shape}')
         print('Numpy Image:')
         print(np_img)
         
@@ -55,6 +56,9 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
             model=model_processor['model'],
             processor=model_processor['processor'],
         )
+        
+        print(f"Embedding Detail: Len -> {len(embedding)} | Min -> {np.array(embedding).min()} | Max -> {np.array(embedding).max()}")
+        
         embedding_txt: str = str(embedding)
         
         print("Embedding:")
@@ -87,6 +91,11 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
         
         if similar_tile is not None:
             similar_tile = similar_tile[0]
+            
+            serializer = self.get_serializer(similar_tile)
+            print('Best Match:')
+            print(serializer.data)
+            
             response_data = Tile512GetSimilarResponse(
                 id=similar_tile.id,
                 cdf=similar_tile.cdf,
