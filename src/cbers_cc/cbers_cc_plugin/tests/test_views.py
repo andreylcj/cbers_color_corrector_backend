@@ -85,7 +85,7 @@ class TestViews(TestSetUp):
             qty=2,
         )
         for idx, item in enumerate(data):
-            curr_val: float = 0 if idx == 0 else 1
+            curr_val: float = -1 if idx == 0 else 1
             item['embedding'] = [curr_val for i in range(1, 512+1)]
             item['cdf'] = CdfJSON(
                 r=[curr_val for i in range(1, 256+1)],
@@ -150,9 +150,16 @@ class TestViews(TestSetUp):
         with open(path, "r") as f:
             data = json.loads(f.read())
             
+        tile512_data = data['tile512']
+        dummy_tile = []
+        for i in range(len(tile512_data)):
+            dummy_tile.append([])
+            for j in range(len(tile512_data[i])):
+                dummy_tile[-1].append([255, 255, 255])
         request_data: Tile512GetSimilarRequest = {
-            'tile512': data['tile512']
-        }      
+            'tile512': dummy_tile
+        }
+                        
         url = reverse('Tile512ViewSet-get_similar')
         res1 = test_method(
             url=url,
@@ -176,8 +183,7 @@ class TestViews(TestSetUp):
         for i in range(len(tile512_data)):
             dummy_tile.append([])
             for j in range(len(tile512_data[i])):
-                val = math.floor(j * 255 / len(tile512_data[i]))
-                dummy_tile[-1].append([val, val, val])
+                dummy_tile[-1].append([0, 0, 0])
         request_data: Tile512GetSimilarRequest = {
             'tile512': dummy_tile
         }
@@ -198,7 +204,7 @@ class TestViews(TestSetUp):
         }
         # pprint(res2)
         
-        self.assertEqual(res1['id'], res2['id'])
+        self.assertNotEqual(res1['id'], res2['id'])
         
     @log_details("Basic", omit_start=False)
     def test_base(self):

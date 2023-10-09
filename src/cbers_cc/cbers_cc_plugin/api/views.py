@@ -40,15 +40,25 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
     )
     def get_similar(self, request, *args, **kwargs):
         request_data: Tile512GetSimilarRequest = request.data
+        print('Request Data:')
+        print(request_data)
         
         # Calculate embedding
         model_processor = cache.get(CACHE_MODEL_PROCESSOR_KEY)
+        
+        np_img = np.array(request_data['tile512'])
+        print('Numpy Image:')
+        print(np_img)
+        
         embedding: Embedding = calculate_tile_embedding(
-            image=np.array(request_data['tile512']),
+            image=np_img,
             model=model_processor['model'],
             processor=model_processor['processor'],
         )
         embedding_txt: str = str(embedding)
+        
+        print("Embedding:")
+        print(embedding_txt)
         
         # Find similar
         similar_tile = self.Model.objects.raw(f"""
