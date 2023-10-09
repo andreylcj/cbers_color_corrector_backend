@@ -22,5 +22,6 @@ class Tile512GetSimilarRequest(TypedDict):
 
 
 class Tile512GetSimilarResponse(TypedDict):
+    id: int
     cdf: CdfJSON
     similarity: float

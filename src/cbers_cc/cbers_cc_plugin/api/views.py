@@ -40,15 +40,25 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
     )
     def get_similar(self, request, *args, **kwargs):
         request_data: Tile512GetSimilarRequest = request.data
+        print('Request Data:')
+        print(request_data)
         
         # Calculate embedding
         model_processor = cache.get(CACHE_MODEL_PROCESSOR_KEY)
+        
+        np_img = np.array(request_data['tile512'])
+        print('Numpy Image:')
+        print(np_img)
+        
         embedding: Embedding = calculate_tile_embedding(
-            image=np.array(request_data['tile512']),
+            image=np_img,
             model=model_processor['model'],
             processor=model_processor['processor'],
         )
         embedding_txt: str = str(embedding)
+        
+        print("Embedding:")
+        print(embedding_txt)
         
         # Find similar
         similar_tile = self.Model.objects.raw(f"""
@@ -63,7 +73,7 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
                         SELECT SQRT(
                             SUM( (e.value::numeric - q.value::numeric)^2 )
                         )
-                        FROM jsonb_array_elements_text(ccc512.embedding) WITH ORDINALITY AS e(value, i),
+                        FROM jsonb_array_elements_text(ccc512.embedding::jsonb) WITH ORDINALITY AS e(value, i),
                             jsonb_array_elements_text('{embedding_txt}'::jsonb) WITH ORDINALITY AS q(value, j)
                         WHERE e.i = q.j
                     ) as similarity
@@ -78,6 +88,7 @@ class Tile512ViewSet(FlexFieldsModelViewSet):
         if similar_tile is not None:
             similar_tile = similar_tile[0]
             response_data = Tile512GetSimilarResponse(
+                id=similar_tile.id,
                 cdf=similar_tile.cdf,
                 similarity=similar_tile.similarity,
             )
